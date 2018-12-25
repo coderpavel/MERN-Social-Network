@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const bodyParser = require('body-parser')
+const bodyParser = require('body-parser');
+const passport = require('passport');
 const users = require('./routes/api/users');
 const profile = require('./routes/api/profile');
 const posts = require('./routes/api/posts');
@@ -22,6 +23,10 @@ mongoose.connect('mongodb://localhost/mern', {
     useNewUrlParser: true
 }).then(() => console.log('Connected to MongoDB'))
     .catch(err => console.log('Could not connect to MongoDB'));
+
+app.use(passport.initialize());
+// Passport config
+require('./config/passport')(passport);
 
 // parse various different custom JSON types as JSON
 app.use(bodyParser.urlencoded({extended: false}));
