@@ -7,11 +7,23 @@ const jwt = require('jsonwebtoken');
 const keys = require('../../config/keys');
 const passport = require('passport');
 
+
+// Load input validation
+const validateRegisterInput = require('../../validation/register');
+const validateLoginInput = require('../../validation/login');
+
 const User = require('../../models/User');
 
 // @desc Register user
 // @access Public
 router.post('/register', (req, res) => {
+
+    const { errors, isValid } = validateRegisterInput(req.body);
+
+    if (!isValid) {
+        return res.status(400).json(errors);
+    }
+
     User.findOne({
         email: req.body.email
     })
@@ -52,31 +64,44 @@ router.post('/register', (req, res) => {
 // @access Public
 
 router.post('/login', (req, res) => {
+    const { errors, isValid } = validateLoginInput(req.body);
+
+
+
     const email = req.body.email;
     const password = req.body.password;
 
     User.findOne({ email: email })
         .then(user => {
             // Check for user
-            if (!user) return res.status(404).json({ email: "User not found" });
+            if (!user) {
+                errors.email = 'User not found';
+                return res.status(404).json(errors);
+            }
 
             // Check for pass
             bcrypt.compare(password, user.password).then((isMatch) => {
-                if (!isMatch) return res.status(400).json({ password: "Passord Incorrect" });
+                if (isMatch) {
+                    //return res.status(400).json({ password: "Passord Incorrect" });
 
-                const payload = { id: user.id, name: user.name, avatar: user.avatar };
+                    const payload = { id: user.id, name: user.name, avatar: user.avatar };
 
-                // JWT
-                jwt.sign(
-                    payload,
-                    keys.secretOrKey,
-                    { expiresIn: 3600 },
-                    (err, token) => {
-                        res.json({
-                            success: true,
-                            token: 'Bearer ' + token
-                        })
-                    });
+                    // JWT
+                    jwt.sign(
+                        payload,
+                        keys.secretOrKey,
+                        { expiresIn: 3600 },
+                        (err, token) => {
+                            res.json({
+                                success: true,
+                                token: 'Bearer ' + token
+                            })
+                        });
+                } else {
+                    errors.password = 'Password incorrect';
+                    return res.status(400).json(errors);
+                }
+
             });
         });
 })
