@@ -66,7 +66,9 @@ router.post('/register', (req, res) => {
 router.post('/login', (req, res) => {
     const { errors, isValid } = validateLoginInput(req.body);
 
-
+    if (!isValid) {
+        return res.status(400).json(errors);
+    }
 
     const email = req.body.email;
     const password = req.body.password;
@@ -80,27 +82,30 @@ router.post('/login', (req, res) => {
             }
 
             // Check for pass
-            bcrypt.compare(password, user.password).then((isMatch) => {
-                if (isMatch) {
-                    //return res.status(400).json({ password: "Passord Incorrect" });
+            bcrypt.compare(password, user.password).then(isMatch => {
 
-                    const payload = { id: user.id, name: user.name, avatar: user.avatar };
 
-                    // JWT
-                    jwt.sign(
-                        payload,
-                        keys.secretOrKey,
-                        { expiresIn: 3600 },
-                        (err, token) => {
-                            res.json({
-                                success: true,
-                                token: 'Bearer ' + token
-                            })
-                        });
-                } else {
+                if (!isMatch) {
                     errors.password = 'Password incorrect';
                     return res.status(400).json(errors);
                 }
+
+                const payload = { id: user.id, name: user.name, avatar: user.avatar };
+
+                // JWT
+                jwt.sign(
+                    payload,
+                    keys.secretOrKey,
+                    { expiresIn: 3600 },
+                    (err, token) => {
+                        console.log('OK');
+                        res.json({
+                            success: true,
+                            token: 'Bearer ' + token
+                        })
+                    });
+
+
 
             });
         });
