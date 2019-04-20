@@ -126,7 +126,6 @@ router.post('/comment/:id', passport.authenticate('jwt', { session: false }), (r
         });
 });
 
-
 // @route DELETE api/post/comment/:id/:comment_id
 // @desc DELETE comment from post
 // @access Private
@@ -147,8 +146,6 @@ router.delete('/comment/:id/:comment_id', passport.authenticate('jwt', { session
         });
         
 });
-
-
 
 // @route Post api/posts
 // @desc Create Post

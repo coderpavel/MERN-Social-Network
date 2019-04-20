@@ -17,47 +17,44 @@ const User = require('../../models/User');
 // @desc Register user
 // @access Public
 router.post('/register', (req, res) => {
-
     const { errors, isValid } = validateRegisterInput(req.body);
 
+    // Check Validation
     if (!isValid) {
+        console.log('chto to ne to 1');
         return res.status(400).json(errors);
     }
+    console.log('2');
+    User.findOne({ email: req.body.email }).then(user => {
+        if (user) {
+            errors.email = 'Email already exists';
+            return res.status(400).json(errors);
+        } else {
+            const avatar = gravatar.url(req.body.email, {
+                s: '200', // Size
+                r: 'pg', // Rating
+                d: 'mm' // Default
+            });
 
-    User.findOne({
-        email: req.body.email
-    })
-        .then(user => {
-            if (user) {
-                return res.status(400).json({ email: 'email already exists' });
-            } else {
+            const newUser = new User({
+                name: req.body.name,
+                email: req.body.email,
+                avatar,
+                password: req.body.password
+            });
 
-                const avatar = gravatar.url(req.body.email, {
-                    s: '200', // Size
-                    r: 'pg', // Rating
-                    d: 'rm' // Default
+            bcrypt.genSalt(10, (err, salt) => {
+                bcrypt.hash(newUser.password, salt, (err, hash) => {
+                    if (err) throw err;
+                    newUser.password = hash;
+                    newUser
+                        .save()
+                        .then(user => res.json(user))
+                        .catch(err => console.log(err));
                 });
-
-                const newUser = new User({
-                    name: req.body.name,
-                    email: req.body.email,
-                    avatar, // the same: avatar: avatar
-                    password: req.body.password
-                });
-
-
-                bcrypt.genSalt(10, (err, salt) => {
-                    bcrypt.hash(newUser.password, salt, (err, hash) => {
-                        if (err) throw err;
-                        newUser.password = hash;
-                        newUser.save()
-                            .then(user => res.json(user))
-                            .catch(err => console.log(err));
-
-                    });
-                });
-            }
-        });
+            });
+        }
+    });
 });
 
 // @desc Login user/ Return JWT
